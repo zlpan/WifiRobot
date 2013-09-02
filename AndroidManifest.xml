@@ -43,6 +43,10 @@
         <activity android:name=".bluetooth"
             android:label="bluetooth"></activity>
         <activity android:name="Preferences" android:label="Preferences"></activity>
+        <activity android:name=".DeviceListActivity"
+                  android:label="@string/select_device"
+                  android:theme="@android:style/Theme.Dialog"
+                  android:configChanges="orientation|keyboardHidden" />
     </application>
 
 </manifest>

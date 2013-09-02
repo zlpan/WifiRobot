@@ -66,7 +66,7 @@ public class bluetooth extends Activity implements OnClickListener{
     private ImageButton mRightButton;
     private ImageButton mBackButton;
     //Intent request code
-    private static final int REQUEST_BT_SETTING = 1;
+    private static final int REQUEST_CONNECT_DEVICE = 1;
     private static final int REQUEST_ENABLE_BT = 2;
     
     //SPP UUID
@@ -74,7 +74,7 @@ public class bluetooth extends Activity implements OnClickListener{
 
     //Target Device INFO
     private static final String PIN_CODE = "1234";
-    private static final String ADDR = "20:13:06:28:43:38";
+    private static String ADDR = "20:13:06:28:43:38";
     private static final String NAME ="HC-06";
     //Toast msg
   	private void toast(String msg){
@@ -94,12 +94,12 @@ public class bluetooth extends Activity implements OnClickListener{
 			finish();
 			return;
 		}
-		//If BT is not no, request that it be enabled.
 	}
 	@Override
 	public void onStart(){
 		super.onStart();
 		if(D)Log.e(TAG, "++onStart()++");
+		//If BT is not no, request that it be enabled.
 		if(!mBTAdapter.isEnabled()){
 			Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
 			intent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
@@ -107,7 +107,7 @@ public class bluetooth extends Activity implements OnClickListener{
 		}
 		//otherwise, init the session
 		//init() will then be called during onActivityResult
-		else if(connect == null)init();
+		else findDevice();
 	}
 	@Override
 	public void onResume(){
@@ -199,7 +199,6 @@ public class bluetooth extends Activity implements OnClickListener{
 		//get a thread to connect socket
 		connect = new ConnectThread();
 	}
-	
 	@Override
 	public void onClick(View v) {
 		// TODO Auto-generated method stub
@@ -225,18 +224,24 @@ public class bluetooth extends Activity implements OnClickListener{
 	}
 	//When the Intent Activity return
 	@Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        super.onActivityResult(requestCode, resultCode, intent);
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if(D) Log.e(TAG, "onActivityResult " + requestCode);
+       // super.onActivityResult(requestCode, resultCode, data);
         switch(requestCode)
         {
-        case REQUEST_BT_SETTING:
-        case REQUEST_ENABLE_BT:
-        {
+        case REQUEST_CONNECT_DEVICE:
         	if(resultCode == Activity.RESULT_OK)
         	{
-        		//if the BT is enabled, then just init a session
-        		Log.e(TAG, "++onResult++");
+        		ADDR = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+        		Log.e(TAG, "++on finddevice back++");
         		init();
+        	}
+        	break;
+        case REQUEST_ENABLE_BT:
+        	if(resultCode == Activity.RESULT_OK)
+        	{
+        		Log.e(TAG, "++onResult++");
+        		findDevice();
         	} else {
                 // User did not enable Bluetooth or an error occured
                 Log.d(TAG, "BT not enabled");
@@ -244,8 +249,12 @@ public class bluetooth extends Activity implements OnClickListener{
                 finish();
             }
         }
-        default:break;
-        }
+	}
+	private void findDevice() {
+		// TODO Auto-generated method stub
+		Intent serverIntent = new Intent(this, DeviceListActivity.class);
+		startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
+		Log.e(TAG, "call finddevice");
 	}
 	// The Handler that gets information , and handle it
 	private final Handler handler = new Handler(){
@@ -399,25 +408,25 @@ public class bluetooth extends Activity implements OnClickListener{
 			}
 		}
 	}
-	//The BroadCastReceiver that listens for setpin finish
-	//and close the setting dialog
-	private final BroadcastReceiver mReceiver = new BroadcastReceiver(){
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			// TODO Auto-generated method stub
-			String action = intent.getAction();
-			if(action.equals("android.bluetooth.device.action.PAIRING_REQUEST"))
-			{
-				BluetoothDevice btDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-				Log.i(TAG,"dddd");
-				try {
-					ClsUtils.setPin(btDevice.getClass(), btDevice, PIN_CODE);
-					ClsUtils.createBond(btDevice.getClass(), btDevice);
-					ClsUtils.cancelPairingUserInput(btDevice.getClass(), btDevice);
-				} catch (Exception e) {
-					// TODO: handle exception
-				}
-			}
-		}
-	};
+////	//The BroadCastReceiver that listens for setpin finish
+//	//and close the setting dialog
+//	private final BroadcastReceiver mReceiver = new BroadcastReceiver(){
+//		@Override
+//		public void onReceive(Context context, Intent intent) {
+//			// TODO Auto-generated method stub
+//			String action = intent.getAction();
+//			if(action.equals("android.bluetooth.device.action.PAIRING_REQUEST"))
+//			{
+//				BluetoothDevice btDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+//				Log.i(TAG,"dddd");
+//				try {
+//					ClsUtils.setPin(btDevice.getClass(), btDevice, PIN_CODE);
+//					ClsUtils.createBond(btDevice.getClass(), btDevice);
+//					ClsUtils.cancelPairingUserInput(btDevice.getClass(), btDevice);
+//				} catch (Exception e) {
+//					// TODO: handle exception
+//				}
+//			}
+//		}
+//	};
 }
